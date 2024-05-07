@@ -1,14 +1,20 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginUserDTO } from './dto/login-user.dto';
-import * as bcrypt from 'bcrypt';
 import { RegisterUserDto } from './dto/register-user.dto';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) { } 
-  
-  async register(registerUserDto: RegisterUserDto){
+  constructor(
+    private prisma: PrismaService,
+    private readonly jwtService: JwtService
+  ) { }
+
+  async register(registerUserDto: RegisterUserDto) {
     try {
       const newUser = await this.prisma.newuser.create({
         data: {
@@ -18,7 +24,12 @@ export class AuthService {
       });
 
       delete newUser.password;
-      return newUser;
+
+      return {
+        ...newUser,
+        email: newUser.email.toLowerCase(),
+        token: this.getJwToken({ id: newUser.id })
+      };
 
     } catch (error) {
       console.log(error);
@@ -40,9 +51,14 @@ export class AuthService {
 
     return {
       email: user.email,
-      password: user.password
+      password: user.password,
+      token: this.getJwToken({ id: user.id })
     }
   }
 
-  
+  private getJwToken(payload: JwtPayload) {
+    const token = this.jwtService.sign(payload);
+    return token;
+  }
+
 }
