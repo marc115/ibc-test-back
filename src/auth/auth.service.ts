@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -26,7 +26,8 @@ export class AuthService {
       delete newUser.password;
 
       return {
-        ...newUser,
+        names: newUser.names,
+        lastName: newUser.lastNames,
         email: newUser.email.toLowerCase(),
         token: this.getJwToken({ id: newUser.id })
       };
@@ -44,14 +45,19 @@ export class AuthService {
         email: email,
       }
     });
-
+    //comprobar que las contraseñas coincidan
     if (!user || !bcrypt.compareSync(password, user.password)) {
-      throw new UnauthorizedException("Credentials are not valid")
+      throw new UnauthorizedException("Las credenciales no son válidas")
+    }
+    //comprobar que el usuario esté activo
+    if(!user.isActive){
+      throw new ForbiddenException("No tiene privilegios para esta acción")
     }
 
     return {
+      names: user.names,
+      lastName: user.lastNames,
       email: user.email,
-      password: user.password,
       token: this.getJwToken({ id: user.id })
     }
   }

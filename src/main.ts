@@ -10,10 +10,17 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
     })
-   );
+  );
+
+  // Enable CORS
+  app.enableCors({
+    origin: 'http://localhost:5173', // URL of your React app
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // Enable if your frontend makes requests with cookies
+  });
 
   // const config = new DocumentBuilder()
   //   .setTitle('Median')
